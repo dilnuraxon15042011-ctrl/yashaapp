@@ -9,8 +9,68 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VaccinationRouteImport } from './routes/vaccination'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ScreenHealthRouteImport } from './routes/screen-health'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as NutritionRouteImport } from './routes/nutrition'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as GrowthRouteImport } from './routes/growth'
+import { Route as DeficiencyRouteImport } from './routes/deficiency'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VaccinationRoute = VaccinationRouteImport.update({
+  id: '/vaccination',
+  path: '/vaccination',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScreenHealthRoute = ScreenHealthRouteImport.update({
+  id: '/screen-health',
+  path: '/screen-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NutritionRoute = NutritionRouteImport.update({
+  id: '/nutrition',
+  path: '/nutrition',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GrowthRoute = GrowthRouteImport.update({
+  id: '/growth',
+  path: '/growth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeficiencyRoute = DeficiencyRouteImport.update({
+  id: '/deficiency',
+  path: '/deficiency',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +79,172 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/deficiency': typeof DeficiencyRoute
+  '/growth': typeof GrowthRoute
+  '/login': typeof LoginRoute
+  '/nutrition': typeof NutritionRoute
+  '/register': typeof RegisterRoute
+  '/report': typeof ReportRoute
+  '/screen-health': typeof ScreenHealthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/vaccination': typeof VaccinationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/deficiency': typeof DeficiencyRoute
+  '/growth': typeof GrowthRoute
+  '/login': typeof LoginRoute
+  '/nutrition': typeof NutritionRoute
+  '/register': typeof RegisterRoute
+  '/report': typeof ReportRoute
+  '/screen-health': typeof ScreenHealthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/vaccination': typeof VaccinationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/deficiency': typeof DeficiencyRoute
+  '/growth': typeof GrowthRoute
+  '/login': typeof LoginRoute
+  '/nutrition': typeof NutritionRoute
+  '/register': typeof RegisterRoute
+  '/report': typeof ReportRoute
+  '/screen-health': typeof ScreenHealthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/vaccination': typeof VaccinationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/deficiency'
+    | '/growth'
+    | '/login'
+    | '/nutrition'
+    | '/register'
+    | '/report'
+    | '/screen-health'
+    | '/sitemap.xml'
+    | '/vaccination'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/deficiency'
+    | '/growth'
+    | '/login'
+    | '/nutrition'
+    | '/register'
+    | '/report'
+    | '/screen-health'
+    | '/sitemap.xml'
+    | '/vaccination'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/deficiency'
+    | '/growth'
+    | '/login'
+    | '/nutrition'
+    | '/register'
+    | '/report'
+    | '/screen-health'
+    | '/sitemap.xml'
+    | '/vaccination'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
+  DeficiencyRoute: typeof DeficiencyRoute
+  GrowthRoute: typeof GrowthRoute
+  LoginRoute: typeof LoginRoute
+  NutritionRoute: typeof NutritionRoute
+  RegisterRoute: typeof RegisterRoute
+  ReportRoute: typeof ReportRoute
+  ScreenHealthRoute: typeof ScreenHealthRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  VaccinationRoute: typeof VaccinationRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vaccination': {
+      id: '/vaccination'
+      path: '/vaccination'
+      fullPath: '/vaccination'
+      preLoaderRoute: typeof VaccinationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/screen-health': {
+      id: '/screen-health'
+      path: '/screen-health'
+      fullPath: '/screen-health'
+      preLoaderRoute: typeof ScreenHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nutrition': {
+      id: '/nutrition'
+      path: '/nutrition'
+      fullPath: '/nutrition'
+      preLoaderRoute: typeof NutritionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/growth': {
+      id: '/growth'
+      path: '/growth'
+      fullPath: '/growth'
+      preLoaderRoute: typeof GrowthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deficiency': {
+      id: '/deficiency'
+      path: '/deficiency'
+      fullPath: '/deficiency'
+      preLoaderRoute: typeof DeficiencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +257,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
+  DeficiencyRoute: DeficiencyRoute,
+  GrowthRoute: GrowthRoute,
+  LoginRoute: LoginRoute,
+  NutritionRoute: NutritionRoute,
+  RegisterRoute: RegisterRoute,
+  ReportRoute: ReportRoute,
+  ScreenHealthRoute: ScreenHealthRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  VaccinationRoute: VaccinationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
