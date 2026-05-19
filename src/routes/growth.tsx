@@ -1,15 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { whoHeightBoys, sampleChild } from "@/lib/mockData";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend, Scatter, ComposedChart } from "recharts";
+import { XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend, Scatter, ComposedChart, Line } from "recharts";
 import { TrendingUp, AlertCircle } from "lucide-react";
+import confetti from "canvas-confetti";
 
 export const Route = createFileRoute("/growth")({ component: Growth });
 
 function Growth() {
   const [h, setH] = useState(sampleChild.heightCm);
   const [w, setW] = useState(sampleChild.weightKg);
+  const prevH = useRef(sampleChild.heightCm);
   const ageYears = (Date.now() - new Date(sampleChild.dob).getTime()) / (365.25 * 86400 * 1000);
   const childPoint = { age: +ageYears.toFixed(1), child: h };
 
@@ -21,6 +23,15 @@ function Growth() {
   const bmiBadge = bmi < 14 ? { c: "bg-caution/20 text-caution-foreground", l: "Low" } : bmi > 18 ? { c: "bg-caution/20 text-caution-foreground", l: "High" } : { c: "bg-safe/15 text-safe", l: "Healthy" };
 
   const below15 = h < (whoHeightBoys[Math.round(ageYears)]?.p15 ?? 0);
+  const healthy = !below15 && bmiBadge.l === "Healthy";
+  const delta = +(h - prevH.current).toFixed(1);
+
+  useEffect(() => {
+    if (healthy) {
+      confetti({ particleCount: 60, spread: 60, origin: { y: 0.3 }, colors: ["#22C55E", "#0D9488"] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AppShell>
@@ -51,6 +62,14 @@ function Growth() {
             <p className="text-sm">Growth is below the 15th percentile — consider consulting your paediatrician.</p>
           </div>
         )}
+
+        {healthy && (
+          <div className="rounded-2xl p-4 bg-safe/15 border border-safe/30 flex items-center gap-3">
+            <span className="text-2xl">📈</span>
+            <p className="text-sm font-medium">{sampleChild.name} is growing well — {delta >= 0 ? "+" : ""}{delta} cm since last check {delta >= 0 ? "↑" : "↓"}</p>
+          </div>
+        )}
+
 
         <div className="yasha-card p-5">
           <h2 className="font-semibold mb-3">Height for age (boys, 0–18 yrs)</h2>
