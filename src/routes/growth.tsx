@@ -66,6 +66,14 @@ function Growth() {
           </div>
         )}
 
+        {healthy && (
+          <div className="rounded-2xl p-4 bg-safe/15 border border-safe/30 flex items-center gap-3">
+            <span className="text-2xl">📈</span>
+            <p className="text-sm font-medium">{sampleChild.name} is growing well — {delta >= 0 ? "+" : ""}{delta} cm since last check {delta >= 0 ? "↑" : "↓"}</p>
+          </div>
+        )}
+
+
         <div className="yasha-card p-5">
           <h2 className="font-semibold mb-3">Height for age (boys, 0–18 yrs)</h2>
           <div className="h-80">
