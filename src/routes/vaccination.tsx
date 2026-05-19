@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { vaccineSchedule as initialSchedule, type Vaccine } from "@/lib/mockData";
 import { Check, AlertTriangle } from "lucide-react";
+import confetti from "canvas-confetti";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/vaccination")({ component: Vaccination });
 
@@ -11,6 +13,19 @@ function Vaccination() {
   const done = list.filter((v) => v.done).length;
   const pct = Math.round((done / list.length) * 100);
   const overdue = list.filter((v) => !v.done && /months|year/i.test(v.due));
+  const celebrated = useRef(false);
+
+  useEffect(() => {
+    if (done === list.length && !celebrated.current) {
+      celebrated.current = true;
+      confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 }, colors: ["#F97316", "#22C55E", "#0D9488"] });
+    }
+  }, [done, list.length]);
+
+  const toggle = (i: number) => {
+    setList((l) => l.map((x, j) => j === i ? { ...x, done: !x.done, doneDate: x.done ? null : new Date().toISOString().slice(0, 10) } : x));
+    toast.success("Saved ✓");
+  };
 
   return (
     <AppShell>
