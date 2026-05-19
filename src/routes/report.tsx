@@ -59,8 +59,8 @@ function Report() {
             <button onClick={handleDownload} className="min-h-11 px-4 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary-dark inline-flex items-center gap-2">
               <Download className="w-4 h-4" /> PDF
             </button>
-            <button className="min-h-11 px-4 rounded-xl bg-trust text-trust-foreground font-medium hover:opacity-90 inline-flex items-center gap-2">
-              <Share2 className="w-4 h-4" /> Share
+            <button onClick={handleWhatsApp} className="min-h-11 px-4 rounded-xl bg-[#25D366] text-white font-medium hover:opacity-90 inline-flex items-center gap-2">
+              <MessageCircle className="w-4 h-4" /> WhatsApp
             </button>
           </div>
         </header>
