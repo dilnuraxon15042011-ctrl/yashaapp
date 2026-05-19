@@ -7,6 +7,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { Toaster } from "sonner";
+import YashaBot from "@/components/YashaBot";
+import Onboarding from "@/components/Onboarding";
 
 import appCss from "../styles.css?url";
 import "../lib/i18n";
