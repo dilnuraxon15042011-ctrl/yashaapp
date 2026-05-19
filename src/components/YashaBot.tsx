@@ -1,228 +1,248 @@
-import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send } from "lucide-react";
-import { yashaResponses } from "@/lib/i18n";
+import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { X, Send, Trash2, MessageCircle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { loadMessages, sendChat, clearMessages } from "@/lib/chat.functions";
+import chickMascot from "@/assets/chick-mascot.png";
 
-type Msg = { from: "user" | "bot"; text: string; id: number };
-
-const QUICK: Array<{ key: keyof typeof yashaResponses; tKey: string }> = [
-  { key: "iron", tKey: "chatbot.quick.iron" },
-  { key: "vaccine", tKey: "chatbot.quick.vaccine" },
-  { key: "screen", tKey: "chatbot.quick.screen" },
-  { key: "exercise", tKey: "chatbot.quick.exercise" },
-];
+type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
 export default function YashaBot() {
-  const { t, i18n } = useTranslation();
-  const lang = (i18n.language?.slice(0, 2) || "uz") as "uz" | "ru" | "en";
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const leftEye = useRef<HTMLSpanElement>(null);
-  const rightEye = useRef<HTMLSpanElement>(null);
+  const [streaming, setStreaming] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const idRef = useRef(0);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { user, loading } = useAuth();
 
-  // eye tracking
+  const loadFn = useServerFn(loadMessages);
+  const sendFn = useServerFn(sendChat);
+  const clearFn = useServerFn(clearMessages);
+
+  // Load history when chat opens and user is signed in
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      [leftEye.current, rightEye.current].forEach((el) => {
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        const angle = Math.atan2(e.clientY - cy, e.clientX - cx);
-        const dx = Math.cos(angle) * 2;
-        const dy = Math.sin(angle) * 2;
-        el.style.transform = `translate(${dx}px, ${dy}px)`;
-      });
-    };
-    window.addEventListener("mousemove", handler);
-    return () => window.removeEventListener("mousemove", handler);
-  }, []);
+    if (!open || !user || loaded) return;
+    loadFn()
+      .then((msgs) => { setMessages(msgs); setLoaded(true); })
+      .catch((e) => toast.error(e?.message ?? "Couldn't load chat"));
+  }, [open, user, loaded, loadFn]);
 
+  // Autoscroll
   useEffect(() => {
-    if (open && messages.length === 0) {
-      setMessages([{ from: "bot", text: t("chatbot.greeting"), id: ++idRef.current }]);
-    }
-  }, [open, messages.length, t]);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, streaming]);
 
+  // Auto-focus
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: 1e9, behavior: "smooth" });
-  }, [messages, typing]);
+    if (open && user) inputRef.current?.focus();
+  }, [open, user, messages.length]);
 
-  const pushBot = (text: string) => {
-    setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setMessages((m) => [...m, { from: "bot", text, id: ++idRef.current }]);
-    }, 800);
-  };
-
-  const handleQuick = (key: keyof typeof yashaResponses) => {
-    setMessages((m) => [...m, { from: "user", text: t(`chatbot.quick.${key}`), id: ++idRef.current }]);
-    pushBot(yashaResponses[key][lang]);
-  };
-
-  const handleSend = () => {
+  const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text) return;
-    setMessages((m) => [...m, { from: "user", text, id: ++idRef.current }]);
+    if (!text || streaming || !user) return;
     setInput("");
-    // try to match keywords
-    const lower = text.toLowerCase();
-    const found = (Object.keys(yashaResponses) as Array<keyof typeof yashaResponses>).find((k) =>
-      lower.includes(k)
-    );
-    pushBot(found ? yashaResponses[found][lang] : t("chatbot.fallback"));
-  };
+    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text };
+    const assistantId = crypto.randomUUID();
+    setMessages((m) => [...m, userMsg, { id: assistantId, role: "assistant", content: "" }]);
+    setStreaming(true);
+    try {
+      const stream = await sendFn({ data: { message: text } });
+      for await (const chunk of stream as AsyncIterable<{ delta: string }>) {
+        setMessages((m) =>
+          m.map((msg) => msg.id === assistantId ? { ...msg, content: msg.content + chunk.delta } : msg),
+        );
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Something went wrong";
+      toast.error(msg);
+      setMessages((m) => m.filter((x) => x.id !== assistantId));
+    } finally {
+      setStreaming(false);
+    }
+  }, [input, streaming, sendFn, user]);
+
+  const handleClear = useCallback(async () => {
+    try {
+      await clearFn();
+      setMessages([]);
+      toast.success("Chat cleared");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Couldn't clear chat");
+    }
+  }, [clearFn]);
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating chick button */}
       <motion.button
-        ref={btnRef}
-        onClick={() => setOpen(true)}
-        aria-label={t("chatbot.open")}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Chat with Yasha Chick"
+        className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-dark shadow-xl flex items-center justify-center overflow-visible"
         whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-16 h-16 rounded-full grid place-items-center text-white font-extrabold text-2xl select-none"
-        style={{
-          background: "linear-gradient(135deg, #F97316, #EA580C)",
-          boxShadow: "0 8px 28px rgba(249, 115, 22, 0.55)",
-        }}
+        whileTap={{ scale: 0.94 }}
+        animate={open ? {} : { y: [0, -4, 0] }}
+        transition={{ y: { repeat: Infinity, duration: 2.2, ease: "easeInOut" } }}
       >
-        {/* Pulse ring */}
-        <span
-          className="absolute inset-0 rounded-full"
-          style={{
-            animation: "yasha-pulse 4s ease-out infinite",
-            boxShadow: "0 0 0 0 rgba(249,115,22,0.6)",
-          }}
-        />
-        {/* Eyes */}
-        <span className="absolute top-2 left-3 w-2.5 h-2.5 rounded-full bg-white grid place-items-center overflow-hidden">
-          <span ref={leftEye} className="w-1 h-1 rounded-full bg-[#1a1a1a] transition-transform" />
-        </span>
-        <span className="absolute top-2 right-3 w-2.5 h-2.5 rounded-full bg-white grid place-items-center overflow-hidden">
-          <span ref={rightEye} className="w-1 h-1 rounded-full bg-[#1a1a1a] transition-transform" />
-        </span>
-        <span className="relative leading-none mt-1">Y</span>
-        <style>{`
-          @keyframes yasha-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(249,115,22,0.6); }
-            70% { box-shadow: 0 0 0 24px rgba(249,115,22,0); }
-            100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
-          }
-        `}</style>
+        <img src={chickMascot} alt="" width={56} height={56} className="w-14 h-14 drop-shadow-md" />
+        {!open && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent border-2 border-card" />
+        )}
       </motion.button>
 
-      {/* Chat panel */}
       <AnimatePresence>
         {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/30"
-            />
-            <motion.div
-              initial={{ x: 400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 400, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 280, damping: 30 }}
-              className="fixed z-50 bottom-0 right-0 w-full md:w-[400px] md:bottom-6 md:right-6 md:rounded-2xl rounded-t-2xl bg-card border border-border shadow-2xl flex flex-col"
-              style={{ height: "min(560px, 80vh)" }}
-            >
-              <div className="flex items-center gap-3 p-4 border-b border-border">
-                <div className="w-10 h-10 rounded-full grid place-items-center text-white font-bold" style={{ background: "linear-gradient(135deg,#F97316,#EA580C)" }}>
-                  Y
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold">{t("chatbot.name")}</div>
-                  <div className="text-xs text-trust">● online</div>
-                </div>
-                <button onClick={() => setOpen(false)} aria-label={t("chatbot.close")} className="min-h-11 min-w-11 grid place-items-center text-muted-foreground hover:text-foreground">
-                  <X className="w-5 h-5" />
-                </button>
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", damping: 22, stiffness: 280 }}
+            className="fixed bottom-40 md:bottom-24 right-2 md:right-6 z-40 w-[calc(100vw-1rem)] max-w-[400px] h-[70vh] max-h-[600px] bg-card rounded-2xl border border-border shadow-2xl flex flex-col overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-br from-primary/15 to-accent/20 p-3 flex items-center gap-3 border-b border-border">
+              <img src={chickMascot} alt="" width={40} height={40} className="w-10 h-10" />
+              <div className="flex-1 min-w-0">
+                <h2 className="font-bold text-foreground leading-tight">Yasha Chick 🐤</h2>
+                <p className="text-xs text-muted-foreground">Your friendly family-health helper</p>
               </div>
+              {user && messages.length > 0 && (
+                <button onClick={handleClear} aria-label="Clear chat" className="p-2 rounded-lg hover:bg-background/60 text-muted-foreground"><Trash2 className="w-4 h-4"/></button>
+              )}
+              <button onClick={() => setOpen(false)} aria-label="Close" className="p-2 rounded-lg hover:bg-background/60 text-muted-foreground"><X className="w-4 h-4"/></button>
+            </div>
 
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.map((m) => (
-                  <motion.div
-                    key={m.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                        m.from === "user"
-                          ? "bg-primary text-primary-foreground rounded-br-md"
-                          : "bg-muted text-foreground rounded-bl-md"
-                      }`}
-                    >
-                      {m.text}
-                    </div>
-                  </motion.div>
-                ))}
-                {typing && (
-                  <div className="flex justify-start">
-                    <div className="bg-muted px-3 py-2 rounded-2xl rounded-bl-md flex gap-1">
-                      {[0, 1, 2].map((i) => (
-                        <motion.span
-                          key={i}
-                          className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
-                          animate={{ y: [0, -3, 0] }}
-                          transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* Body */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-background/40">
+              {loading ? (
+                <div className="text-sm text-muted-foreground text-center pt-6">Loading…</div>
+              ) : !user ? (
+                <SignInPrompt onClose={() => setOpen(false)} />
+              ) : messages.length === 0 ? (
+                <EmptyState onPick={(t) => { setInput(t); setTimeout(() => inputRef.current?.focus(), 0); }} />
+              ) : (
+                messages.map((m) => <Bubble key={m.id} msg={m} />)
+              )}
+              {streaming && messages[messages.length - 1]?.content === "" && (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm pl-1">
+                  <TypingDots />
+                </div>
+              )}
+            </div>
 
-                {messages.length <= 1 && !typing && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {QUICK.map((q) => (
-                      <button
-                        key={q.key}
-                        onClick={() => handleQuick(q.key)}
-                        className="text-xs px-3 py-1.5 rounded-full bg-primary-light text-primary-dark font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
-                      >
-                        {t(q.tKey)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="p-3 border-t border-border flex gap-2">
-                <input
+            {/* Composer */}
+            {user && (
+              <form
+                onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                className="border-t border-border p-2 flex items-end gap-2 bg-card"
+              >
+                <textarea
+                  ref={inputRef}
+                  rows={1}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder={t("chatbot.placeholder")}
-                  className="flex-1 min-h-11 px-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="Ask Yasha Chick anything…"
+                  className="flex-1 resize-none max-h-32 px-3 py-2 rounded-xl bg-muted/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <button
-                  onClick={handleSend}
-                  aria-label={t("chatbot.send")}
-                  className="min-h-11 px-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary-dark grid place-items-center"
+                  type="submit"
+                  disabled={!input.trim() || streaming}
+                  aria-label="Send"
+                  className="shrink-0 w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 hover:bg-primary-dark transition-colors"
                 >
                   <Send className="w-4 h-4" />
                 </button>
-              </div>
-            </motion.div>
-          </>
+              </form>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function Bubble({ msg }: { msg: ChatMessage }) {
+  const isUser = msg.role === "user";
+  if (isUser) {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[85%] bg-primary text-primary-foreground rounded-2xl rounded-br-md px-3 py-2 text-sm shadow-sm">
+          {msg.content}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-2 items-start">
+      <img src={chickMascot} alt="" width={28} height={28} className="w-7 h-7 mt-0.5 shrink-0" />
+      <div className="flex-1 text-sm text-foreground prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+        <ReactMarkdown>{msg.content || " "}</ReactMarkdown>
+      </div>
+    </div>
+  );
+}
+
+function TypingDots() {
+  return (
+    <div className="flex gap-1 items-center px-2">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="w-2 h-2 rounded-full bg-primary"
+          animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ onPick }: { onPick: (t: string) => void }) {
+  const chips = [
+    "Bolam 6 oylik — qachon prikorm boshlash kerak?",
+    "How much iron does a 2-year-old need?",
+    "Сколько часов сна нужно ребёнку 4 лет?",
+    "Help, my child won't eat vegetables 🥦",
+  ];
+  return (
+    <div className="text-center py-4">
+      <img src={chickMascot} alt="" width={96} height={96} className="w-24 h-24 mx-auto" />
+      <h3 className="mt-3 font-bold text-lg">Hi! I'm Yasha Chick 🐤</h3>
+      <p className="text-sm text-muted-foreground mt-1 px-4">Ask me anything about your child's nutrition, growth, vaccines or sleep — in Uzbek, Russian, or English.</p>
+      <div className="mt-4 flex flex-col gap-2 px-2">
+        {chips.map((c) => (
+          <button key={c} onClick={() => onPick(c)} className="text-left text-sm px-3 py-2 rounded-xl bg-card border border-border hover:border-primary hover:bg-primary/5 transition-colors">
+            {c}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SignInPrompt({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="text-center py-8">
+      <img src={chickMascot} alt="" width={96} height={96} className="w-24 h-24 mx-auto" />
+      <h3 className="mt-3 font-bold text-lg">Let's chat!</h3>
+      <p className="text-sm text-muted-foreground mt-2 px-4">Sign in so I can remember our conversation across all your devices.</p>
+      <div className="mt-5 flex flex-col gap-2 px-6">
+        <Link to="/login" onClick={onClose} className="min-h-11 inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary-dark">
+          <MessageCircle className="w-4 h-4 mr-2"/> Sign in to chat
+        </Link>
+        <Link to="/register" onClick={onClose} className="text-sm text-trust font-medium">Create a free account</Link>
+      </div>
+    </div>
   );
 }
