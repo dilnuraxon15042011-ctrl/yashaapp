@@ -1,17 +1,19 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Home, Apple, TrendingUp, Syringe, MoreHorizontal, Heart, User } from "lucide-react";
+import { Home, Apple, TrendingUp, Syringe, MoreHorizontal, Heart, Activity, Eye, FileText } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { type ReactNode } from "react";
 import LangSwitcher from "./LangSwitcher";
 
-const sidebarLinks = [
+const navLinks = [
   { to: "/dashboard", icon: Home, key: "dashboard" },
   { to: "/nutrition", icon: Apple, key: "nutrition" },
   { to: "/growth", icon: TrendingUp, key: "growth" },
-  { to: "/deficiency", icon: Heart, key: "deficiency" },
+  { to: "/exercise", icon: Activity, key: "exercise" },
   { to: "/vaccination", icon: Syringe, key: "vaccination" },
-  { to: "/screen-health", icon: User, key: "screen" },
-  { to: "/report", icon: User, key: "report" },
+  { to: "/deficiency", icon: Heart, key: "deficiency" },
+  { to: "/screen-health", icon: Eye, key: "screen" },
+  { to: "/report", icon: FileText, key: "report" },
 ] as const;
 
 export default function AppShell({ children }: { children: ReactNode }) {
@@ -21,27 +23,34 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-30 bg-card/90 backdrop-blur border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-xl yasha-hero-gradient grid place-items-center text-primary-foreground font-bold">Y</span>
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <img src="/yasha-logo.png" alt="Yasha" className="w-9 h-9 rounded-full" />
             <span className="text-xl font-bold text-primary-dark">{t("brand")}</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-1 text-sm">
-            {sidebarLinks.slice(0, 6).map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={`px-3 py-2 rounded-lg transition-colors ${
-                  location.pathname === l.to
-                    ? "bg-primary-light text-primary-dark font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {t(`nav.${l.key}`)}
-              </Link>
-            ))}
+          <nav className="hidden lg:flex items-center gap-1 text-sm overflow-x-auto">
+            {navLinks.map((l) => {
+              const active = location.pathname === l.to;
+              return (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className={`relative px-3 py-2 rounded-lg transition-colors ${
+                    active ? "text-primary-dark font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {t(`nav.${l.key}`)}
+                  {active && (
+                    <motion.span
+                      layoutId="nav-underline"
+                      className="absolute left-2 right-2 -bottom-0.5 h-0.5 rounded-full bg-primary"
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <LangSwitcher />
             <Link
               to="/login"
@@ -53,15 +62,27 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 pb-24 md:pb-12">{children}</main>
+      <main className="flex-1 pb-24 md:pb-12">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border">
         <div className="grid grid-cols-5">
           {[
             { to: "/", icon: Home, key: "home" },
             { to: "/nutrition", icon: Apple, key: "nutrition" },
-            { to: "/growth", icon: TrendingUp, key: "growth" },
+            { to: "/exercise", icon: Activity, key: "exercise" },
             { to: "/vaccination", icon: Syringe, key: "vaccination" },
             { to: "/dashboard", icon: MoreHorizontal, key: "more" },
           ].map((l) => {
@@ -86,7 +107,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <footer className="bg-trust text-trust-foreground">
         <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-xl bg-primary grid place-items-center font-bold">Y</span>
+            <img src="/yasha-logo.png" alt="Yasha" className="w-8 h-8 rounded-full" />
             <span className="font-bold text-lg">{t("brand")} App</span>
           </div>
           <p className="text-sm opacity-90 max-w-xl">{t("footer.disclaimer")}</p>
