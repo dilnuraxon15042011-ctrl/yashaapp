@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send } from "lucide-react";
-import { yashaResponses, type default as i18nDefault } from "@/lib/i18n";
+import { yashaResponses } from "@/lib/i18n";
 
 type Msg = { from: "user" | "bot"; text: string; id: number };
 
@@ -12,9 +12,6 @@ const QUICK: Array<{ key: keyof typeof yashaResponses; tKey: string }> = [
   { key: "screen", tKey: "chatbot.quick.screen" },
   { key: "exercise", tKey: "chatbot.quick.exercise" },
 ];
-
-// suppress unused import warning while still re-using the i18n module side effect
-void i18nDefault;
 
 export default function YashaBot() {
   const { t, i18n } = useTranslation();
