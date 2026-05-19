@@ -64,7 +64,7 @@ function Vaccination() {
             return (
               <div key={i} className="p-4 flex items-center gap-3">
                 <button
-                  onClick={() => setList((l) => l.map((x, j) => j === i ? { ...x, done: !x.done, doneDate: x.done ? null : new Date().toISOString().slice(0, 10) } : x))}
+                  onClick={() => toggle(i)}
                   className={`w-11 h-11 rounded-full grid place-items-center transition-colors ${v.done ? "bg-safe text-safe-foreground" : "bg-muted text-muted-foreground hover:bg-primary-light"}`}
                   aria-label="Mark done"
                 >
