@@ -2,14 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { whoHeightBoys, sampleChild } from "@/lib/mockData";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend, Scatter, ComposedChart } from "recharts";
+import { XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend, Scatter, ComposedChart, Line } from "recharts";
 import { TrendingUp, AlertCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export const Route = createFileRoute("/growth")({ component: Growth });
-
-// suppress unused-import warning
-void LineChart;
 
 function Growth() {
   const [h, setH] = useState(sampleChild.heightCm);
