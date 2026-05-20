@@ -1,3 +1,4 @@
+import "@/lib/i18n";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Home, Apple, TrendingUp, Syringe, MoreHorizontal, Heart, Activity, Eye, FileText } from "lucide-react";
