@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -12,7 +13,8 @@ import YashaBot from "@/components/YashaBot";
 import Onboarding from "@/components/Onboarding";
 
 import appCss from "../styles.css?url";
-import "../lib/i18n";
+import i18n from "../lib/i18n";
+
 
 function NotFoundComponent() {
   return (
