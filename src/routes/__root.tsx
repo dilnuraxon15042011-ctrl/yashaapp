@@ -106,6 +106,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // SSR + first paint always render in "uz"; after hydration switch to saved lang.
+  useEffect(() => {
+    const saved = localStorage.getItem("yasha-lang");
+    if (saved && saved !== i18n.language) i18n.changeLanguage(saved);
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
