@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -12,7 +13,8 @@ import YashaBot from "@/components/YashaBot";
 import Onboarding from "@/components/Onboarding";
 
 import appCss from "../styles.css?url";
-import "../lib/i18n";
+import i18n from "../lib/i18n";
+
 
 function NotFoundComponent() {
   return (
@@ -104,6 +106,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // SSR + first paint always render in "uz"; after hydration switch to saved lang.
+  useEffect(() => {
+    const saved = localStorage.getItem("yasha-lang");
+    if (saved && saved !== i18n.language) i18n.changeLanguage(saved);
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
