@@ -1,19 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import AppShell from "@/components/AppShell";
-import { sampleChild, vaccineSchedule } from "@/lib/mockData";
-import { Apple, TrendingUp, Heart, Syringe, Eye, FileText, Activity, ChevronRight, Plus } from "lucide-react";
+import { Apple, TrendingUp, Heart, Syringe, Eye, FileText, Activity, ChevronRight } from "lucide-react";
+import { STORE_KEYS, useChild, useLocalState, ageMonths, ageYears, todayKey } from "@/lib/store";
+import { VACCINE_SCHEDULE, statusOf, type VaccineRecords } from "@/lib/vaccines";
+import { sumDay, targetForAge, emptyDay, type NutritionLog } from "@/lib/foods";
+import { estimatePercentile } from "@/lib/who";
+import { emptyScreenDay, type ScreenLog } from "@/lib/eyeData";
 
 export const Route = createFileRoute("/dashboard")({ component: Dashboard });
-
-function ageYears(dob: string) {
-  const diff = Date.now() - new Date(dob).getTime();
-  return (diff / (365.25 * 24 * 3600 * 1000)).toFixed(1);
-}
-
-type Child = { name: string; dob: string; sex: "male" | "female"; heightCm?: number; weightKg?: number };
 
 function HealthRing({ pct, size = 140 }: { pct: number; size?: number }) {
   const r = (size - 16) / 2;
@@ -21,103 +18,80 @@ function HealthRing({ pct, size = 140 }: { pct: number; size?: number }) {
   const offset = c - (pct / 100) * c;
   return (
     <svg width={size} height={size} className="-rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--muted)" strokeWidth="10" fill="none" />
-      <motion.circle
-        cx={size / 2} cy={size / 2} r={r}
-        stroke="url(#yashaGrad)" strokeWidth="10" strokeLinecap="round" fill="none"
-        strokeDasharray={c}
-        initial={{ strokeDashoffset: c }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 1.1, ease: "easeOut" }}
-      />
-      <defs>
-        <linearGradient id="yashaGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#F97316" />
-          <stop offset="100%" stopColor="#EA580C" />
-        </linearGradient>
-      </defs>
+      <circle cx={size / 2} cy={size / 2} r={r} stroke="hsl(var(--muted))" strokeWidth="10" fill="none" />
+      <motion.circle cx={size / 2} cy={size / 2} r={r} stroke="url(#yashaGrad)" strokeWidth="10" strokeLinecap="round" fill="none"
+        strokeDasharray={c} initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: offset }} transition={{ duration: 1.1, ease: "easeOut" }} />
+      <defs><linearGradient id="yashaGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#F97316" /><stop offset="100%" stopColor="#EA580C" /></linearGradient></defs>
     </svg>
   );
 }
 
 function Dashboard() {
   const { t } = useTranslation();
-  const [children, setChildren] = useState<Child[]>([sampleChild]);
-  const [selected, setSelected] = useState(0);
+  const [child] = useChild();
+  const [records] = useLocalState<VaccineRecords>(STORE_KEYS.vaccineRecords, {});
+  const [nutritionLog] = useLocalState<NutritionLog>(STORE_KEYS.nutritionLog, {});
+  const [screenLog] = useLocalState<ScreenLog>(STORE_KEYS.screenLog, {});
+  const [exerciseLog] = useLocalState<Record<string, number>>(STORE_KEYS.exerciseLog, {});
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("yasha-child");
-    if (stored) {
-      try {
-        const c = JSON.parse(stored) as Child;
-        setChildren([{ ...sampleChild, ...c }]);
-      } catch { /* ignore */ }
+  const today = todayKey();
+  const months = ageMonths(child.dob);
+  const years = ageYears(child.dob);
+
+  const { vaccinePct, vaccineDone, overdueCount } = useMemo(() => {
+    let d = 0, o = 0;
+    for (const v of VACCINE_SCHEDULE) {
+      const s = statusOf(v, child.dob, records[v.id]);
+      if (s === "done") d++;
+      if (s === "overdue") o++;
     }
-  }, []);
+    return { vaccineDone: d, vaccinePct: Math.round((d / VACCINE_SCHEDULE.length) * 100), overdueCount: o };
+  }, [child.dob, records]);
 
-  const child = children[selected];
-  const overdue = vaccineSchedule.filter((v) => !v.done).length;
-  const doneCount = vaccineSchedule.filter((v) => v.done).length;
-  const vaccinePct = Math.round((doneCount / vaccineSchedule.length) * 100);
+  const nutritionPct = useMemo(() => {
+    const day = nutritionLog[today] ?? emptyDay();
+    const totals = sumDay(day);
+    const tgt = targetForAge(years);
+    const items: Array<keyof typeof totals> = ["iron", "calcium", "protein"];
+    const avg = items.reduce((a, k) => a + Math.min(100, (totals[k] / tgt[k]) * 100), 0) / items.length;
+    return Math.round(avg);
+  }, [nutritionLog, today, years]);
 
-  const modules = useMemo(() => [
-    { Icon: Apple, key: "nutrition", to: "/nutrition", status: "attention", accent: "#F97316", note: "Iron 62% of target" },
-    { Icon: TrendingUp, key: "growth", to: "/growth", status: "good", accent: "#0D9488", note: "50th percentile" },
-    { Icon: Activity, key: "exercise", to: "/exercise", status: "good", accent: "#22C55E", note: "60 min today" },
-    { Icon: Heart, key: "deficiency", to: "/deficiency", status: "good", accent: "#EF4444", note: "Not screened recently" },
-    { Icon: Syringe, key: "vaccination", to: "/vaccination", status: overdue ? "attention" : "good", accent: "#F59E0B", note: `${doneCount}/${vaccineSchedule.length}` },
-    { Icon: Eye, key: "screen", to: "/screen-health", status: "good", accent: "#0D9488", note: "2.1h today" },
-    { Icon: FileText, key: "report", to: "/report", status: "good", accent: "#F97316", note: "Auto-compiled" },
-  ], [overdue, doneCount]);
+  const screenPct = useMemo(() => {
+    const d = screenLog[today] ?? emptyScreenDay();
+    const total = d.phone + d.tablet + d.tv + d.computer;
+    const limit = years < 2 ? 0.1 : years <= 5 ? 1 : years <= 12 ? 2 : 3;
+    if (total === 0) return 100;
+    return Math.max(0, Math.round((1 - Math.max(0, total - limit) / Math.max(limit, 1)) * 100));
+  }, [screenLog, today, years]);
 
-  // health score = avg of 4 metrics (vaccine %, nutrition mock 62, exercise mock 100, screen mock 80)
-  const healthScore = Math.round((vaccinePct + 62 + 100 + 80) / 4);
+  const exerciseMin = exerciseLog[today] ?? 0;
+  const exercisePct = Math.min(100, Math.round((exerciseMin / 60) * 100));
+
+  const healthScore = Math.round((vaccinePct + nutritionPct + screenPct + exercisePct) / 4);
+  const percentile = child.heightCm ? estimatePercentile(child.sex, months, child.heightCm) : 50;
+
+  const modules = [
+    { Icon: Apple, key: "nutrition", to: "/nutrition", accent: "#F97316", note: `${nutritionPct}%`, status: nutritionPct >= 70 ? "good" : "attention" },
+    { Icon: TrendingUp, key: "growth", to: "/growth", accent: "#0D9488", note: `P${percentile}`, status: percentile >= 15 ? "good" : "attention" },
+    { Icon: Activity, key: "exercise", to: "/exercise", accent: "#22C55E", note: `${exerciseMin} min`, status: exerciseMin >= 30 ? "good" : "attention" },
+    { Icon: Heart, key: "deficiency", to: "/deficiency", accent: "#EF4444", note: "Screening", status: "good" },
+    { Icon: Syringe, key: "vaccination", to: "/vaccination", accent: "#F59E0B", note: `${vaccineDone}/${VACCINE_SCHEDULE.length}`, status: overdueCount ? "attention" : "good" },
+    { Icon: Eye, key: "screen", to: "/screen-health", accent: "#0D9488", note: `${screenPct}%`, status: screenPct >= 60 ? "good" : "attention" },
+    { Icon: FileText, key: "report", to: "/report", accent: "#F97316", note: "PDF", status: "good" },
+  ] as const;
 
   return (
     <AppShell>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        {/* Greeting banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="yasha-card p-6 bg-gradient-to-br from-primary-light to-accent"
-        >
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          className="yasha-card p-6 bg-gradient-to-br from-primary-light to-accent">
           <p className="text-sm text-primary-dark/80">{t("dashboard.welcome")}</p>
           <h1 className="text-2xl md:text-3xl font-extrabold mt-1 text-primary-dark">
             {t("dashboard.greeting")}, {child.name}! 👋
           </h1>
         </motion.div>
 
-        {/* Child switcher */}
-        <div className="flex items-center gap-3 overflow-x-auto -mx-4 px-4 pb-2">
-          {children.map((c, i) => (
-            <button
-              key={c.name + i}
-              onClick={() => setSelected(i)}
-              className="flex flex-col items-center gap-1 shrink-0"
-            >
-              <div className={`w-14 h-14 rounded-full grid place-items-center font-bold text-lg text-primary-foreground ${i === selected ? "ring-4 ring-primary" : ""}`}
-                style={{ background: "linear-gradient(135deg,#F97316,#EA580C)" }}
-              >
-                {c.name[0]?.toUpperCase()}
-              </div>
-              <span className="text-xs font-medium">{c.name}</span>
-            </button>
-          ))}
-          <button
-            onClick={() => {
-              const name = prompt(t("dashboard.addChild"));
-              if (name) setChildren((cs) => [...cs, { name, dob: new Date().toISOString().slice(0, 10), sex: "male" }]);
-            }}
-            className="w-14 h-14 rounded-full border-2 border-dashed border-border grid place-items-center text-muted-foreground hover:border-primary hover:text-primary"
-            aria-label={t("dashboard.addChild")}
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Health ring + child summary */}
         <div className="grid md:grid-cols-3 gap-4">
           <div className="yasha-card p-5 flex items-center gap-5">
             <div className="relative">
@@ -133,39 +107,24 @@ function Dashboard() {
           <div className="md:col-span-2 yasha-card p-5">
             <div className="font-semibold text-lg">{child.name}</div>
             <div className="text-sm text-muted-foreground mt-1">
-              {ageYears(child.dob)} yrs · {child.heightCm ?? sampleChild.heightCm} cm · {child.weightKg ?? sampleChild.weightKg} kg
+              {years} yrs · {child.heightCm ?? "—"} cm · {child.weightKg ?? "—"} kg
             </div>
             <div className="grid grid-cols-3 gap-2 mt-4">
-              <Stat label="Vaccines" value={`${doneCount}/${vaccineSchedule.length}`} />
-              <Stat label="Streak" value="🔥 5" />
-              <Stat label="Updated" value="Today" />
+              <Stat label="Vaccines" value={`${vaccineDone}/${VACCINE_SCHEDULE.length}`} />
+              <Stat label="Today kcal" value={`${Math.round(sumDay(nutritionLog[today] ?? emptyDay()).calories)}`} />
+              <Stat label="Exercise" value={`${exerciseMin}m`} />
             </div>
           </div>
         </div>
 
-        {/* Module grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {modules.map((m, i) => {
             const Icon = m.Icon;
-            const badge =
-              m.status === "good"
-                ? "bg-safe/15 text-safe"
-                : m.status === "attention"
-                  ? "bg-caution/20 text-caution-foreground"
-                  : "bg-danger/15 text-danger";
+            const badge = m.status === "good" ? "bg-safe/15 text-safe" : "bg-caution/20 text-caution-foreground";
             return (
-              <motion.div
-                key={m.to}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-                whileHover={{ y: -4 }}
-              >
-                <Link
-                  to={m.to}
-                  className="yasha-card p-5 flex items-start gap-4 hover:shadow-lg transition-shadow group border-l-4"
-                  style={{ borderLeftColor: m.accent }}
-                >
+              <motion.div key={m.to} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }} whileHover={{ y: -4 }}>
+                <Link to={m.to} className="yasha-card p-5 flex items-start gap-4 hover:shadow-lg transition-shadow group border-l-4" style={{ borderLeftColor: m.accent }}>
                   <div className="w-11 h-11 rounded-xl grid place-items-center text-primary-foreground" style={{ backgroundColor: m.accent }}>
                     <Icon className="w-5 h-5" />
                   </div>
