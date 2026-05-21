@@ -130,7 +130,7 @@ function Exercise() {
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1">{ex.description[lang]}</p>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => toggleDone(ex.name.en)}
+                  onClick={() => toggleDone(ex.name.en, ex.duration)}
                   className={`mt-4 min-h-11 rounded-xl font-medium transition-colors inline-flex items-center justify-center gap-2 ${
                     isDone ? "bg-safe text-safe-foreground" : "bg-primary text-primary-foreground hover:bg-primary-dark"
                   }`}
