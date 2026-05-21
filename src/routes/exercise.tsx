@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import { exerciseData, type Lang } from "@/lib/exerciseData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { toast } from "sonner";
+import { STORE_KEYS, useLocalState, todayKey } from "@/lib/store";
 
 export const Route = createFileRoute("/exercise")({ component: Exercise });
 
@@ -15,9 +16,12 @@ function Exercise() {
   const lang = (i18n.language?.slice(0, 2) || "uz") as Lang;
   const [activeId, setActiveId] = useState(exerciseData[2].id);
   const active = exerciseData.find((g) => g.id === activeId)!;
-  const [done, setDone] = useState<Set<string>>(new Set());
-  const [goal, setGoal] = useState(60);
-  const [streak] = useState(4);
+  const today = todayKey();
+
+  const [doneLog, setDoneLog] = useLocalState<Record<string, string[]>>(STORE_KEYS.exerciseLog + "_done", {});
+  const [minutesLog, setMinutesLog] = useLocalState<Record<string, number>>(STORE_KEYS.exerciseLog, {});
+  const [goal, setGoal] = useLocalState<number>(STORE_KEYS.exerciseGoal, 60);
+  const done = new Set(doneLog[today] ?? []);
 
   const totalMins = useMemo(
     () => active.exercises.filter((e) => done.has(e.name.en)).reduce((a, e) => a + e.duration, 0),
@@ -25,27 +29,31 @@ function Exercise() {
   );
   const goalPct = Math.min(100, (totalMins / goal) * 100);
 
-  const weekData = [
-    { d: "Mon", min: 45 },
-    { d: "Tue", min: 60 },
-    { d: "Wed", min: 30 },
-    { d: "Thu", min: 75 },
-    { d: "Fri", min: 50 },
-    { d: "Sat", min: 90 },
-    { d: "Sun", min: totalMins },
-  ];
+  const weekData = useMemo(() => {
+    const arr: { d: string; min: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const k = d.toISOString().slice(0, 10);
+      arr.push({ d: d.toLocaleDateString(lang === "uz" ? "uz-UZ" : lang === "ru" ? "ru-RU" : "en-US", { weekday: "short" }), min: minutesLog[k] ?? 0 });
+    }
+    return arr;
+  }, [minutesLog, lang]);
 
-  const toggleDone = (key: string) => {
-    setDone((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-        toast.success(t("toast.marked"));
-      }
-      return next;
-    });
+  const streak = useMemo(() => {
+    let s = 0; const d = new Date();
+    for (;;) {
+      const k = d.toISOString().slice(0, 10);
+      if ((minutesLog[k] ?? 0) > 0) { s++; d.setDate(d.getDate() - 1); } else break;
+    }
+    return s;
+  }, [minutesLog]);
+
+  const toggleDone = (key: string, duration: number) => {
+    const has = done.has(key);
+    const next = new Set(done);
+    if (has) next.delete(key); else { next.add(key); toast.success(t("toast.marked")); }
+    setDoneLog((p) => ({ ...p, [today]: Array.from(next) }));
+    setMinutesLog((p) => ({ ...p, [today]: Math.max(0, (p[today] ?? 0) + (has ? -duration : duration)) }));
   };
 
   return (
