@@ -5,6 +5,13 @@ import { Home, Apple, TrendingUp, Syringe, MoreHorizontal, Heart, Activity, Eye,
 import { motion, AnimatePresence } from "framer-motion";
 import { type ReactNode } from "react";
 import LangSwitcher from "./LangSwitcher";
+import { useMounted } from "@/lib/store";
+
+/** Renders children only after client hydration to avoid i18n SSR mismatches. */
+function ClientText({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
+  const mounted = useMounted();
+  return <span suppressHydrationWarning>{mounted ? children : fallback}</span>;
+}
 
 const navLinks = [
   { to: "/dashboard", icon: Home, key: "dashboard" },
