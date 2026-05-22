@@ -5,6 +5,13 @@ import { Home, Apple, TrendingUp, Syringe, MoreHorizontal, Heart, Activity, Eye,
 import { motion, AnimatePresence } from "framer-motion";
 import { type ReactNode } from "react";
 import LangSwitcher from "./LangSwitcher";
+import { useMounted } from "@/lib/store";
+
+/** Renders children only after client hydration to avoid i18n SSR mismatches. */
+function ClientText({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
+  const mounted = useMounted();
+  return <span suppressHydrationWarning>{mounted ? children : fallback}</span>;
+}
 
 const navLinks = [
   { to: "/dashboard", icon: Home, key: "dashboard" },
@@ -40,7 +47,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     active ? "text-primary-dark font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
-                  {t(`nav.${l.key}`)}
+                  <ClientText fallback={l.key}>{t(`nav.${l.key}`)}</ClientText>
                   {active && (
                     <motion.span
                       layoutId="nav-underline"
@@ -98,7 +105,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                {t(`nav.${l.key}`)}
+                <ClientText fallback={l.key}>{t(`nav.${l.key}`)}</ClientText>
               </Link>
             );
           })}
