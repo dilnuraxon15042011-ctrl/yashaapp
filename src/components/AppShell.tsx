@@ -47,7 +47,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     active ? "text-primary-dark font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
-                  {t(`nav.${l.key}`)}
+                  <ClientText fallback={l.key}>{t(`nav.${l.key}`)}</ClientText>
                   {active && (
                     <motion.span
                       layoutId="nav-underline"
@@ -105,7 +105,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                {t(`nav.${l.key}`)}
+                <ClientText fallback={l.key}>{t(`nav.${l.key}`)}</ClientText>
               </Link>
             );
           })}
