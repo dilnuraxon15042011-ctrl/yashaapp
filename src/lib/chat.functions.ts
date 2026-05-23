@@ -15,10 +15,11 @@ Style:
 export const loadMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("chat_messages")
       .select("id, role, content, created_at")
+      .eq("user_id", userId)
       .order("created_at", { ascending: true })
       .limit(200);
     if (error) throw new Error(error.message);

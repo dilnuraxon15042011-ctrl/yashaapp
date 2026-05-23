@@ -1,7 +1,7 @@
 import "@/lib/i18n";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Home, Apple, TrendingUp, Syringe, MoreHorizontal, Heart, Activity, Eye, FileText } from "lucide-react";
+import { Home, Apple, TrendingUp, Syringe, Heart, Activity, Eye, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type ReactNode } from "react";
 import LangSwitcher from "./LangSwitcher";
@@ -70,14 +70,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 pb-24 md:pb-12">
+      <main className="flex-1 pb-28 lg:pb-12">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
           >
             {children}
           </motion.div>
@@ -85,14 +85,17 @@ export default function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border">
+      <nav
+        className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border safe-bottom"
+        aria-label="Primary"
+      >
         <div className="grid grid-cols-5">
           {[
-            { to: "/", icon: Home, key: "home" },
+            { to: "/dashboard", icon: Home, key: "dashboard" },
             { to: "/nutrition", icon: Apple, key: "nutrition" },
             { to: "/exercise", icon: Activity, key: "exercise" },
             { to: "/vaccination", icon: Syringe, key: "vaccination" },
-            { to: "/dashboard", icon: MoreHorizontal, key: "more" },
+            { to: "/report", icon: FileText, key: "report" },
           ].map((l) => {
             const Icon = l.icon;
             const active = location.pathname === l.to;
@@ -100,11 +103,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={l.to}
                 to={l.to}
-                className={`min-h-14 flex flex-col items-center justify-center gap-0.5 text-[11px] ${
+                aria-current={active ? "page" : undefined}
+                className={`min-h-14 flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5" aria-hidden />
                 <ClientText fallback={l.key}>{t(`nav.${l.key}`)}</ClientText>
               </Link>
             );
