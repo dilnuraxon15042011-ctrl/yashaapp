@@ -1,7 +1,7 @@
 import "@/lib/i18n";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Home, Apple, TrendingUp, Syringe, MoreHorizontal, Heart, Activity, Eye, FileText } from "lucide-react";
+import { Home, Apple, TrendingUp, Syringe, Heart, Activity, Eye, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type ReactNode } from "react";
 import LangSwitcher from "./LangSwitcher";
