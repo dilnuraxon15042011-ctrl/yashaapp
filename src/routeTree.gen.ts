@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VaccinationRouteImport } from './routes/vaccination'
+import { Route as SleepRouteImport } from './routes/sleep'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScreenHealthRouteImport } from './routes/screen-health'
 import { Route as ReportRouteImport } from './routes/report'
@@ -25,6 +26,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const VaccinationRoute = VaccinationRouteImport.update({
   id: '/vaccination',
   path: '/vaccination',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SleepRoute = SleepRouteImport.update({
+  id: '/sleep',
+  path: '/sleep',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/screen-health'
     | '/sitemap.xml'
+    | '/sleep'
     | '/vaccination'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/screen-health'
     | '/sitemap.xml'
+    | '/sleep'
     | '/vaccination'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/screen-health'
     | '/sitemap.xml'
+    | '/sleep'
     | '/vaccination'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   ReportRoute: typeof ReportRoute
   ScreenHealthRoute: typeof ScreenHealthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SleepRoute: typeof SleepRoute
   VaccinationRoute: typeof VaccinationRoute
 }
 
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/vaccination'
       fullPath: '/vaccination'
       preLoaderRoute: typeof VaccinationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sleep': {
+      id: '/sleep'
+      path: '/sleep'
+      fullPath: '/sleep'
+      preLoaderRoute: typeof SleepRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -287,8 +307,19 @@ const rootRouteChildren: RootRouteChildren = {
   ReportRoute: ReportRoute,
   ScreenHealthRoute: ScreenHealthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SleepRoute: SleepRoute,
   VaccinationRoute: VaccinationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
