@@ -18,6 +18,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as NutritionRouteImport } from './routes/nutrition'
 import { Route as MoodRouteImport } from './routes/mood'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as GrowthRouteImport } from './routes/growth'
 import { Route as ExerciseRouteImport } from './routes/exercise'
 import { Route as DeficiencyRouteImport } from './routes/deficiency'
@@ -69,6 +70,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GrowthRoute = GrowthRouteImport.update({
   id: '/growth',
   path: '/growth',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/deficiency': typeof DeficiencyRoute
   '/exercise': typeof ExerciseRoute
   '/growth': typeof GrowthRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/deficiency': typeof DeficiencyRoute
   '/exercise': typeof ExerciseRoute
   '/growth': typeof GrowthRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/deficiency': typeof DeficiencyRoute
   '/exercise': typeof ExerciseRoute
   '/growth': typeof GrowthRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/deficiency'
     | '/exercise'
     | '/growth'
+    | '/leaderboard'
     | '/login'
     | '/mood'
     | '/nutrition'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/deficiency'
     | '/exercise'
     | '/growth'
+    | '/leaderboard'
     | '/login'
     | '/mood'
     | '/nutrition'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/deficiency'
     | '/exercise'
     | '/growth'
+    | '/leaderboard'
     | '/login'
     | '/mood'
     | '/nutrition'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   DeficiencyRoute: typeof DeficiencyRoute
   ExerciseRoute: typeof ExerciseRoute
   GrowthRoute: typeof GrowthRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   MoodRoute: typeof MoodRoute
   NutritionRoute: typeof NutritionRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/growth': {
       id: '/growth'
       path: '/growth'
@@ -321,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeficiencyRoute: DeficiencyRoute,
   ExerciseRoute: ExerciseRoute,
   GrowthRoute: GrowthRoute,
+  LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   MoodRoute: MoodRoute,
   NutritionRoute: NutritionRoute,
