@@ -10,16 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VaccinationRouteImport } from './routes/vaccination'
+import { Route as SleepRouteImport } from './routes/sleep'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScreenHealthRouteImport } from './routes/screen-health'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as NutritionRouteImport } from './routes/nutrition'
+import { Route as MoodRouteImport } from './routes/mood'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as GrowthRouteImport } from './routes/growth'
 import { Route as ExerciseRouteImport } from './routes/exercise'
 import { Route as DeficiencyRouteImport } from './routes/deficiency'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VaccinationRoute = VaccinationRouteImport.update({
@@ -27,9 +32,19 @@ const VaccinationRoute = VaccinationRouteImport.update({
   path: '/vaccination',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SleepRoute = SleepRouteImport.update({
+  id: '/sleep',
+  path: '/sleep',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScreenHealthRoute = ScreenHealthRouteImport.update({
@@ -52,9 +67,19 @@ const NutritionRoute = NutritionRouteImport.update({
   path: '/nutrition',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MoodRoute = MoodRouteImport.update({
+  id: '/mood',
+  path: '/mood',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GrowthRoute = GrowthRouteImport.update({
@@ -77,6 +102,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AchievementsRoute = AchievementsRouteImport.update({
+  id: '/achievements',
+  path: '/achievements',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -85,104 +115,139 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/achievements': typeof AchievementsRoute
   '/dashboard': typeof DashboardRoute
   '/deficiency': typeof DeficiencyRoute
   '/exercise': typeof ExerciseRoute
   '/growth': typeof GrowthRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/achievements': typeof AchievementsRoute
   '/dashboard': typeof DashboardRoute
   '/deficiency': typeof DeficiencyRoute
   '/exercise': typeof ExerciseRoute
   '/growth': typeof GrowthRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/achievements': typeof AchievementsRoute
   '/dashboard': typeof DashboardRoute
   '/deficiency': typeof DeficiencyRoute
   '/exercise': typeof ExerciseRoute
   '/growth': typeof GrowthRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/achievements'
     | '/dashboard'
     | '/deficiency'
     | '/exercise'
     | '/growth'
+    | '/leaderboard'
     | '/login'
+    | '/mood'
     | '/nutrition'
     | '/register'
     | '/report'
     | '/screen-health'
+    | '/settings'
     | '/sitemap.xml'
+    | '/sleep'
     | '/vaccination'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/achievements'
     | '/dashboard'
     | '/deficiency'
     | '/exercise'
     | '/growth'
+    | '/leaderboard'
     | '/login'
+    | '/mood'
     | '/nutrition'
     | '/register'
     | '/report'
     | '/screen-health'
+    | '/settings'
     | '/sitemap.xml'
+    | '/sleep'
     | '/vaccination'
   id:
     | '__root__'
     | '/'
+    | '/achievements'
     | '/dashboard'
     | '/deficiency'
     | '/exercise'
     | '/growth'
+    | '/leaderboard'
     | '/login'
+    | '/mood'
     | '/nutrition'
     | '/register'
     | '/report'
     | '/screen-health'
+    | '/settings'
     | '/sitemap.xml'
+    | '/sleep'
     | '/vaccination'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AchievementsRoute: typeof AchievementsRoute
   DashboardRoute: typeof DashboardRoute
   DeficiencyRoute: typeof DeficiencyRoute
   ExerciseRoute: typeof ExerciseRoute
   GrowthRoute: typeof GrowthRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
+  MoodRoute: typeof MoodRoute
   NutritionRoute: typeof NutritionRoute
   RegisterRoute: typeof RegisterRoute
   ReportRoute: typeof ReportRoute
   ScreenHealthRoute: typeof ScreenHealthRoute
+  SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SleepRoute: typeof SleepRoute
   VaccinationRoute: typeof VaccinationRoute
 }
 
@@ -195,11 +260,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VaccinationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sleep': {
+      id: '/sleep'
+      path: '/sleep'
+      fullPath: '/sleep'
+      preLoaderRoute: typeof SleepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/screen-health': {
@@ -230,11 +309,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NutritionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mood': {
+      id: '/mood'
+      path: '/mood'
+      fullPath: '/mood'
+      preLoaderRoute: typeof MoodRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/growth': {
@@ -265,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/achievements': {
+      id: '/achievements'
+      path: '/achievements'
+      fullPath: '/achievements'
+      preLoaderRoute: typeof AchievementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -277,16 +377,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AchievementsRoute: AchievementsRoute,
   DashboardRoute: DashboardRoute,
   DeficiencyRoute: DeficiencyRoute,
   ExerciseRoute: ExerciseRoute,
   GrowthRoute: GrowthRoute,
+  LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
+  MoodRoute: MoodRoute,
   NutritionRoute: NutritionRoute,
   RegisterRoute: RegisterRoute,
   ReportRoute: ReportRoute,
   ScreenHealthRoute: ScreenHealthRoute,
+  SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SleepRoute: SleepRoute,
   VaccinationRoute: VaccinationRoute,
 }
 export const routeTree = rootRouteImport

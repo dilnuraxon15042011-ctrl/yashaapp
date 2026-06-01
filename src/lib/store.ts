@@ -150,3 +150,103 @@ export function getLang(): Lang {
   if (v === "uz" || v === "ru" || v === "en") return v;
   return "uz";
 }
+
+// ===================== V4 WELLNESS HOOKS =====================
+
+export type WaterLog = Record<string, Record<string, number>>;
+export function useWaterToday(childId: string) {
+  const [log, setLog, hydrated] = useLocalState<WaterLog>(STORE_KEYS.waterLog, {});
+  const today = todayKey();
+  const glasses = log[childId]?.[today] ?? 0;
+  const set = (n: number) => setLog((p) => ({ ...p, [childId]: { ...(p[childId] ?? {}), [today]: Math.max(0, Math.min(20, n)) } }));
+  const add = (d: number) => set(glasses + d);
+  const last7: { date: string; glasses: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const k = todayKey(new Date(Date.now() - i * 86400000));
+    last7.push({ date: k, glasses: log[childId]?.[k] ?? 0 });
+  }
+  return { glasses, set, add, hydrated, last7 };
+}
+
+export type SleepLog = Record<string, Record<string, import("./wellness").SleepEntry>>;
+export function useSleepLog(childId: string) {
+  const [log, setLog, hydrated] = useLocalState<SleepLog>(STORE_KEYS.sleepLog, {});
+  const child = log[childId] ?? {};
+  const save = (date: string, entry: import("./wellness").SleepEntry) =>
+    setLog((p) => ({ ...p, [childId]: { ...(p[childId] ?? {}), [date]: entry } }));
+  const last7: { date: string; entry?: import("./wellness").SleepEntry }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const k = todayKey(new Date(Date.now() - i * 86400000));
+    last7.push({ date: k, entry: child[k] });
+  }
+  return { entries: child, save, last7, hydrated };
+}
+
+export type MoodLog = Record<string, Record<string, import("./wellness").MoodEntry>>;
+export function useMoodLog(childId: string) {
+  const [log, setLog, hydrated] = useLocalState<MoodLog>(STORE_KEYS.moodLog, {});
+  const child = log[childId] ?? {};
+  const save = (date: string, entry: import("./wellness").MoodEntry) =>
+    setLog((p) => ({ ...p, [childId]: { ...(p[childId] ?? {}), [date]: entry } }));
+  const last30: { date: string; entry?: import("./wellness").MoodEntry }[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const k = todayKey(new Date(Date.now() - i * 86400000));
+    last30.push({ date: k, entry: child[k] });
+  }
+  return { entries: child, save, last30, hydrated };
+}
+
+export type PointsRecord = Record<string, { week: string; total: number; history: { week: string; total: number }[] }>;
+export function usePoints() {
+  const [state, setState, hydrated] = useLocalState<PointsRecord>(STORE_KEYS.points, {});
+  const award = (childId: string, amount: number) => setState((p) => {
+    const wk = weekKey();
+    const cur = p[childId] ?? { week: wk, total: 0, history: [] };
+    let history = cur.history;
+    let total = cur.total;
+    let week = cur.week;
+    if (week !== wk) {
+      history = [...history, { week, total }].slice(-12);
+      total = 0;
+      week = wk;
+    }
+    return { ...p, [childId]: { week, total: total + amount, history } };
+  });
+  const weeklyTotal = (childId: string) => {
+    const wk = weekKey();
+    const cur = state[childId];
+    if (!cur) return 0;
+    return cur.week === wk ? cur.total : 0;
+  };
+  const lifetime = (childId: string) => {
+    const cur = state[childId];
+    if (!cur) return 0;
+    return cur.total + cur.history.reduce((a, h) => a + h.total, 0);
+  };
+  return { state, award, weeklyTotal, lifetime, hydrated };
+}
+
+export function useAchievements() {
+  const [state, setState, hydrated] = useLocalState<Record<string, string[]>>(STORE_KEYS.achievements, {});
+  const unlock = (childId: string, achievementId: string): boolean => {
+    const owned = state[childId] ?? [];
+    if (owned.includes(achievementId)) return false;
+    setState((p) => ({ ...p, [childId]: [...(p[childId] ?? []), achievementId] }));
+    return true;
+  };
+  const owned = (childId: string) => state[childId] ?? [];
+  return { state, unlock, owned, hydrated };
+}
+
+export function useChallengeDone(childId: string) {
+  const [state, setState, hydrated] = useLocalState<Record<string, Record<string, boolean>>>(STORE_KEYS.challengeDone, {});
+  const today = todayKey();
+  const done = !!state[today]?.[childId];
+  const mark = () => setState((p) => ({ ...p, [today]: { ...(p[today] ?? {}), [childId]: true } }));
+  return { done, mark, hydrated };
+}
+
+export function useGrandparent(): [boolean, (v: boolean) => void, boolean] {
+  return useLocalState<boolean>(STORE_KEYS.grandparent, false);
+}
+
