@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VaccinationRouteImport } from './routes/vaccination'
 import { Route as SleepRouteImport } from './routes/sleep'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScreenHealthRouteImport } from './routes/screen-health'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -39,6 +40,11 @@ const SleepRoute = SleepRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScreenHealthRoute = ScreenHealthRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sleep': typeof SleepRoute
   '/vaccination': typeof VaccinationRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/report'
     | '/screen-health'
+    | '/settings'
     | '/sitemap.xml'
     | '/sleep'
     | '/vaccination'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/report'
     | '/screen-health'
+    | '/settings'
     | '/sitemap.xml'
     | '/sleep'
     | '/vaccination'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/report'
     | '/screen-health'
+    | '/settings'
     | '/sitemap.xml'
     | '/sleep'
     | '/vaccination'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ReportRoute: typeof ReportRoute
   ScreenHealthRoute: typeof ScreenHealthRoute
+  SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SleepRoute: typeof SleepRoute
   VaccinationRoute: typeof VaccinationRoute
@@ -259,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/screen-health': {
@@ -369,6 +389,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ReportRoute: ReportRoute,
   ScreenHealthRoute: ScreenHealthRoute,
+  SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SleepRoute: SleepRoute,
   VaccinationRoute: VaccinationRoute,
