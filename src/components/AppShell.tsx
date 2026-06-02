@@ -1,7 +1,7 @@
 import "@/lib/i18n";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Home, Apple, TrendingUp, Syringe, Heart, Activity, Eye, FileText } from "lucide-react";
+import { Home, Apple, TrendingUp, Syringe, Heart, Activity, Eye, FileText, Moon, Smile, Trophy, Settings as SettingsIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type ReactNode } from "react";
 import LangSwitcher from "./LangSwitcher";
@@ -17,11 +17,15 @@ const navLinks = [
   { to: "/dashboard", icon: Home, key: "dashboard" },
   { to: "/nutrition", icon: Apple, key: "nutrition" },
   { to: "/growth", icon: TrendingUp, key: "growth" },
+  { to: "/sleep", icon: Moon, key: "sleep" },
+  { to: "/mood", icon: Smile, key: "mood" },
   { to: "/exercise", icon: Activity, key: "exercise" },
   { to: "/vaccination", icon: Syringe, key: "vaccination" },
   { to: "/deficiency", icon: Heart, key: "deficiency" },
   { to: "/screen-health", icon: Eye, key: "screen" },
+  { to: "/leaderboard", icon: Trophy, key: "leaderboard" },
   { to: "/report", icon: FileText, key: "report" },
+  { to: "/settings", icon: SettingsIcon, key: "settings" },
 ] as const;
 
 export default function AppShell({ children }: { children: ReactNode }) {
@@ -93,9 +97,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
           {[
             { to: "/dashboard", icon: Home, key: "dashboard" },
             { to: "/nutrition", icon: Apple, key: "nutrition" },
-            { to: "/exercise", icon: Activity, key: "exercise" },
-            { to: "/vaccination", icon: Syringe, key: "vaccination" },
-            { to: "/report", icon: FileText, key: "report" },
+            { to: "/sleep", icon: Moon, key: "sleep" },
+            { to: "/mood", icon: Smile, key: "mood" },
+            { to: "/leaderboard", icon: Trophy, key: "leaderboard" },
           ].map((l) => {
             const Icon = l.icon;
             const active = location.pathname === l.to;
