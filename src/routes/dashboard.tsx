@@ -99,6 +99,10 @@ function Dashboard() {
           </h1>
         </motion.div>
 
+        <ChildSwitcher />
+
+        <ChallengeCard />
+
         <div className="grid md:grid-cols-3 gap-4">
           <div className="yasha-card p-5 flex items-center gap-5">
             <div className="relative">
@@ -116,13 +120,20 @@ function Dashboard() {
             <div className="text-sm text-muted-foreground mt-1">
               {years} yrs · {child.heightCm ?? "—"} cm · {child.weightKg ?? "—"} kg
             </div>
-            <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="grid grid-cols-4 gap-2 mt-4">
               <Stat label="Vaccines" value={`${vaccineDone}/${VACCINE_SCHEDULE.length}`} />
               <Stat label="Today kcal" value={`${Math.round(sumDay(nutritionLog[today] ?? emptyDay()).calories)}`} />
               <Stat label="Exercise" value={`${exerciseMin}m`} />
+              <PointsStat />
             </div>
           </div>
         </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <WaterWidget />
+          <FactCard />
+        </div>
+
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {modules.map((m, i) => {
