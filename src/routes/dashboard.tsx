@@ -178,3 +178,11 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function PointsStat() {
+  const mounted = useMounted();
+  const { active } = useChildren();
+  const { weeklyTotal } = usePoints();
+  const pts = mounted ? weeklyTotal(active.id) : 0;
+  return <Stat label="Points" value={`${pts} 🏆`} />;
+}
