@@ -3,8 +3,12 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import AppShell from "@/components/AppShell";
-import { Apple, TrendingUp, Heart, Syringe, Eye, FileText, Activity, ChevronRight } from "lucide-react";
-import { STORE_KEYS, useChild, useLocalState, ageMonths, ageYears, todayKey } from "@/lib/store";
+import ChildSwitcher from "@/components/ChildSwitcher";
+import WaterWidget from "@/components/WaterWidget";
+import ChallengeCard from "@/components/ChallengeCard";
+import FactCard from "@/components/FactCard";
+import { Apple, TrendingUp, Heart, Syringe, Eye, FileText, Activity, Moon, Smile, Trophy, ChevronRight } from "lucide-react";
+import { STORE_KEYS, useChild, useLocalState, ageMonths, ageYears, todayKey, usePoints, useChildren, useMounted } from "@/lib/store";
 import { VACCINE_SCHEDULE, statusOf, type VaccineRecords } from "@/lib/vaccines";
 import { sumDay, targetForAge, emptyDay, type NutritionLog } from "@/lib/foods";
 import { estimatePercentile } from "@/lib/who";
@@ -75,9 +79,12 @@ function Dashboard() {
     { Icon: Apple, key: "nutrition", to: "/nutrition", accent: "#F97316", note: `${nutritionPct}%`, status: nutritionPct >= 70 ? "good" : "attention" },
     { Icon: TrendingUp, key: "growth", to: "/growth", accent: "#0D9488", note: `P${percentile}`, status: percentile >= 15 ? "good" : "attention" },
     { Icon: Activity, key: "exercise", to: "/exercise", accent: "#22C55E", note: `${exerciseMin} min`, status: exerciseMin >= 30 ? "good" : "attention" },
+    { Icon: Moon, key: "sleep", to: "/sleep", accent: "#6366F1", note: "Log tonight", status: "good" },
+    { Icon: Smile, key: "mood", to: "/mood", accent: "#EC4899", note: "Check in", status: "good" },
     { Icon: Heart, key: "deficiency", to: "/deficiency", accent: "#EF4444", note: "Screening", status: "good" },
     { Icon: Syringe, key: "vaccination", to: "/vaccination", accent: "#F59E0B", note: `${vaccineDone}/${VACCINE_SCHEDULE.length}`, status: overdueCount ? "attention" : "good" },
     { Icon: Eye, key: "screen", to: "/screen-health", accent: "#0D9488", note: `${screenPct}%`, status: screenPct >= 60 ? "good" : "attention" },
+    { Icon: Trophy, key: "leaderboard", to: "/leaderboard", accent: "#EAB308", note: "Family rankings", status: "good" },
     { Icon: FileText, key: "report", to: "/report", accent: "#F97316", note: "PDF", status: "good" },
   ] as const;
 
@@ -91,6 +98,10 @@ function Dashboard() {
             {t("dashboard.greeting")}, {child.name}! 👋
           </h1>
         </motion.div>
+
+        <ChildSwitcher />
+
+        <ChallengeCard />
 
         <div className="grid md:grid-cols-3 gap-4">
           <div className="yasha-card p-5 flex items-center gap-5">
@@ -109,13 +120,20 @@ function Dashboard() {
             <div className="text-sm text-muted-foreground mt-1">
               {years} yrs · {child.heightCm ?? "—"} cm · {child.weightKg ?? "—"} kg
             </div>
-            <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="grid grid-cols-4 gap-2 mt-4">
               <Stat label="Vaccines" value={`${vaccineDone}/${VACCINE_SCHEDULE.length}`} />
               <Stat label="Today kcal" value={`${Math.round(sumDay(nutritionLog[today] ?? emptyDay()).calories)}`} />
               <Stat label="Exercise" value={`${exerciseMin}m`} />
+              <PointsStat />
             </div>
           </div>
         </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <WaterWidget />
+          <FactCard />
+        </div>
+
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {modules.map((m, i) => {
@@ -159,4 +177,12 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">{label}</div>
     </div>
   );
+}
+
+function PointsStat() {
+  const mounted = useMounted();
+  const { active } = useChildren();
+  const { weeklyTotal } = usePoints();
+  const pts = mounted ? weeklyTotal(active.id) : 0;
+  return <Stat label="Points" value={`${pts} 🏆`} />;
 }
