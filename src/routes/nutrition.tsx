@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import AppShell from "@/components/AppShell";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine } from "recharts";
-import { Plus, X, Sparkles, Search } from "lucide-react";
+import { Plus, X, Sparkles, Search, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { STORE_KEYS, useLocalState, useChild, ageYears, todayKey, type Lang } from "@/lib/store";
 import { FOODS, targetForAge, emptyDay, sumDay, type NutritionLog, type DayMeals, type Nutrient } from "@/lib/foods";
+import { scanMeal, type ScanItem } from "@/lib/scan.functions";
 
 export const Route = createFileRoute("/nutrition")({ component: Nutrition });
 
@@ -35,14 +37,59 @@ function Nutrition() {
     return FOODS.filter((f) => f.name[lang].toLowerCase().includes(q));
   }, [search, lang]);
 
-  const addFood = (foodId: number) => {
-    setDay((d) => ({ ...d, [pickerMeal]: [...d[pickerMeal], { foodId, portion: 1 }] }));
+  const addFood = (foodId: number, portion = 1) => {
+    setDay((d) => ({ ...d, [pickerMeal]: [...d[pickerMeal], { foodId, portion }] }));
     toast.success(t("toast.added"));
   };
   const removeAt = (meal: Meal, idx: number) =>
     setDay((d) => ({ ...d, [meal]: d[meal].filter((_, i) => i !== idx) }));
   const setPortion = (meal: Meal, idx: number, portion: number) =>
     setDay((d) => ({ ...d, [meal]: d[meal].map((e, i) => (i === idx ? { ...e, portion } : e)) }));
+
+  // ---- AI meal scanner ----
+  const scanFn = useServerFn(scanMeal);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [scanPreview, setScanPreview] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanItems, setScanItems] = useState<ScanItem[] | null>(null);
+
+  const onPickPhoto = async (file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    if (file.size > 6 * 1024 * 1024) { toast.error("Image too large (max 6MB)"); return; }
+    setScanItems(null);
+    setScanning(true);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      });
+      setScanPreview(dataUrl);
+      const res = await scanFn({ data: { imageBase64: dataUrl, mimeType: file.type } });
+      setScanItems(res.items);
+      if (res.items.length === 0) toast.info(res.note ?? "No foods detected.");
+      else toast.success(`Detected ${res.items.length} item${res.items.length > 1 ? "s" : ""}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "scan_failed";
+      if (msg === "rate_limited") toast.error("Too many requests, try again shortly.");
+      else if (msg === "payment_required") toast.error("AI credits exhausted.");
+      else toast.error("Could not analyze photo.");
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const addAllScanned = () => {
+    if (!scanItems?.length) return;
+    setDay((d) => ({
+      ...d,
+      [pickerMeal]: [...d[pickerMeal], ...scanItems.map((s) => ({ foodId: s.foodId, portion: s.portion }))],
+    }));
+    toast.success(`Added ${scanItems.length} to ${pickerMeal}`);
+    setScanItems(null);
+    setScanPreview(null);
+  };
 
   const totals = sumDay(day);
   const nutrients: Nutrient[] = ["iron", "calcium", "vitD", "zinc", "protein", "calories"];
@@ -113,6 +160,105 @@ function Nutrition() {
             <p className="text-sm">{suggestion.lang}</p>
           </div>
         )}
+
+        {/* AI meal scanner */}
+        <div className="yasha-card p-5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="font-semibold flex items-center gap-2">
+                <Camera className="w-4 h-4 text-primary" /> Scan meal photo
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Snap a plate — AI will recognize foods and add them to <strong>{t(`nutrition.${pickerMeal}`)}</strong>.
+              </p>
+            </div>
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={scanning}
+              className="min-h-11 px-4 rounded-xl bg-primary text-primary-foreground font-medium text-sm inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+              {scanning ? "Analyzing…" : "Upload / Take photo"}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onPickPhoto(f);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {(scanPreview || scanItems) && (
+            <div className="mt-4 grid sm:grid-cols-[160px_1fr] gap-4">
+              {scanPreview && (
+                <img src={scanPreview} alt="Meal preview" className="w-full h-40 object-cover rounded-xl border border-border" />
+              )}
+              <div className="min-w-0">
+                {scanning && <p className="text-sm text-muted-foreground">Identifying foods…</p>}
+                {scanItems && scanItems.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No foods detected. Try a clearer photo.</p>
+                )}
+                {scanItems && scanItems.length > 0 && (
+                  <>
+                    <ul className="space-y-2">
+                      {scanItems.map((it, i) => {
+                        const f = FOODS.find((x) => x.id === it.foodId)!;
+                        return (
+                          <li key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted">
+                            <span className="text-2xl">{f.emoji}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{f.name[lang]}</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                portion {it.portion.toFixed(2)} · {Math.round(it.confidence * 100)}% sure
+                              </div>
+                            </div>
+                            <input
+                              type="number" min={0.25} step={0.25} value={it.portion}
+                              onChange={(ev) => {
+                                const v = Math.max(0.25, +ev.target.value);
+                                setScanItems((prev) => prev?.map((p, j) => j === i ? { ...p, portion: v } : p) ?? null);
+                              }}
+                              className="w-16 min-h-9 px-2 text-sm rounded-md border border-input bg-background"
+                            />
+                            <button
+                              onClick={() => setScanItems((prev) => prev?.filter((_, j) => j !== i) ?? null)}
+                              aria-label="Remove"
+                              className="min-h-9 min-w-9 grid place-items-center text-muted-foreground hover:text-destructive"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <div className="mt-3 flex gap-2 flex-wrap">
+                      <button
+                        onClick={addAllScanned}
+                        className="min-h-10 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-sm inline-flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" /> Add all to {t(`nutrition.${pickerMeal}`)}
+                      </button>
+                      <button
+                        onClick={() => { setScanItems(null); setScanPreview(null); }}
+                        className="min-h-10 px-4 rounded-lg bg-muted text-sm"
+                      >
+                        Discard
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+
 
         {/* Nutrient totals chart */}
         <div className="yasha-card p-5">
