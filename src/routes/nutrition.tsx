@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import AppShell from "@/components/AppShell";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine } from "recharts";
-import { Plus, X, Sparkles, Search } from "lucide-react";
+import { Plus, X, Sparkles, Search, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { STORE_KEYS, useLocalState, useChild, ageYears, todayKey, type Lang } from "@/lib/store";
 import { FOODS, targetForAge, emptyDay, sumDay, type NutritionLog, type DayMeals, type Nutrient } from "@/lib/foods";
+import { scanMeal, type ScanItem } from "@/lib/scan.functions";
 
 export const Route = createFileRoute("/nutrition")({ component: Nutrition });
 
