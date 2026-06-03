@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const LANGS = [
@@ -8,7 +9,9 @@ const LANGS = [
 
 export default function LangSwitcher({ onDark = false }: { onDark?: boolean }) {
   const { i18n } = useTranslation();
-  const current = i18n.language?.slice(0, 2) || "uz";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const current = mounted ? (i18n.language?.slice(0, 2) || "uz") : "uz";
   return (
     <div
       className={`inline-flex rounded-xl p-1 text-xs font-medium ${
