@@ -37,14 +37,59 @@ function Nutrition() {
     return FOODS.filter((f) => f.name[lang].toLowerCase().includes(q));
   }, [search, lang]);
 
-  const addFood = (foodId: number) => {
-    setDay((d) => ({ ...d, [pickerMeal]: [...d[pickerMeal], { foodId, portion: 1 }] }));
+  const addFood = (foodId: number, portion = 1) => {
+    setDay((d) => ({ ...d, [pickerMeal]: [...d[pickerMeal], { foodId, portion }] }));
     toast.success(t("toast.added"));
   };
   const removeAt = (meal: Meal, idx: number) =>
     setDay((d) => ({ ...d, [meal]: d[meal].filter((_, i) => i !== idx) }));
   const setPortion = (meal: Meal, idx: number, portion: number) =>
     setDay((d) => ({ ...d, [meal]: d[meal].map((e, i) => (i === idx ? { ...e, portion } : e)) }));
+
+  // ---- AI meal scanner ----
+  const scanFn = useServerFn(scanMeal);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [scanPreview, setScanPreview] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanItems, setScanItems] = useState<ScanItem[] | null>(null);
+
+  const onPickPhoto = async (file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    if (file.size > 6 * 1024 * 1024) { toast.error("Image too large (max 6MB)"); return; }
+    setScanItems(null);
+    setScanning(true);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      });
+      setScanPreview(dataUrl);
+      const res = await scanFn({ data: { imageBase64: dataUrl, mimeType: file.type } });
+      setScanItems(res.items);
+      if (res.items.length === 0) toast.info(res.note ?? "No foods detected.");
+      else toast.success(`Detected ${res.items.length} item${res.items.length > 1 ? "s" : ""}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "scan_failed";
+      if (msg === "rate_limited") toast.error("Too many requests, try again shortly.");
+      else if (msg === "payment_required") toast.error("AI credits exhausted.");
+      else toast.error("Could not analyze photo.");
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const addAllScanned = () => {
+    if (!scanItems?.length) return;
+    setDay((d) => ({
+      ...d,
+      [pickerMeal]: [...d[pickerMeal], ...scanItems.map((s) => ({ foodId: s.foodId, portion: s.portion }))],
+    }));
+    toast.success(`Added ${scanItems.length} to ${pickerMeal}`);
+    setScanItems(null);
+    setScanPreview(null);
+  };
 
   const totals = sumDay(day);
   const nutrients: Nutrient[] = ["iron", "calcium", "vitD", "zinc", "protein", "calories"];
