@@ -89,6 +89,16 @@ function Dashboard() {
     { Icon: FileText, key: "report", to: "/report", accent: "#F97316", note: "PDF", status: "good" },
   ] as const;
 
+  if (!ready) {
+    return (
+      <AppShell>
+        <div className="max-w-6xl mx-auto px-4 py-16 text-center text-muted-foreground">
+          Loading…
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
