@@ -8,7 +8,7 @@ import WaterWidget from "@/components/WaterWidget";
 import ChallengeCard from "@/components/ChallengeCard";
 import FactCard from "@/components/FactCard";
 import { Apple, TrendingUp, Heart, Syringe, Eye, FileText, Activity, Moon, Smile, Trophy, ChevronRight } from "lucide-react";
-import { STORE_KEYS, useChild, useLocalState, ageMonths, ageYears, todayKey, usePoints, useChildren, useMounted } from "@/lib/store";
+import { STORE_KEYS, useChild, useLocalState, ageMonths, ageYears, todayKey, usePoints, useChildren, useMounted, useRequireChild } from "@/lib/store";
 import { VACCINE_SCHEDULE, statusOf, type VaccineRecords } from "@/lib/vaccines";
 import { sumDay, targetForAge, emptyDay, type NutritionLog } from "@/lib/foods";
 import { estimatePercentile } from "@/lib/who";
@@ -32,6 +32,7 @@ function HealthRing({ pct, size = 140 }: { pct: number; size?: number }) {
 
 function Dashboard() {
   const { t } = useTranslation();
+  const { ready } = useRequireChild();
   const [child] = useChild();
   const [records] = useLocalState<VaccineRecords>(STORE_KEYS.vaccineRecords, {});
   const [nutritionLog] = useLocalState<NutritionLog>(STORE_KEYS.nutritionLog, {});
@@ -87,6 +88,16 @@ function Dashboard() {
     { Icon: Trophy, key: "leaderboard", to: "/leaderboard", accent: "#EAB308", note: "Family rankings", status: "good" },
     { Icon: FileText, key: "report", to: "/report", accent: "#F97316", note: "PDF", status: "good" },
   ] as const;
+
+  if (!ready) {
+    return (
+      <AppShell>
+        <div className="max-w-6xl mx-auto px-4 py-16 text-center text-muted-foreground">
+          Loading…
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

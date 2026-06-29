@@ -16,6 +16,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScreenHealthRouteImport } from './routes/screen-health'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NutritionRouteImport } from './routes/nutrition'
 import { Route as MoodRouteImport } from './routes/mood'
 import { Route as LoginRouteImport } from './routes/login'
@@ -60,6 +61,11 @@ const ReportRoute = ReportRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NutritionRoute = NutritionRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
+  '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
+  '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mood': typeof MoodRoute
   '/nutrition': typeof NutritionRoute
+  '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/screen-health': typeof ScreenHealthRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mood'
     | '/nutrition'
+    | '/onboarding'
     | '/register'
     | '/report'
     | '/screen-health'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mood'
     | '/nutrition'
+    | '/onboarding'
     | '/register'
     | '/report'
     | '/screen-health'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mood'
     | '/nutrition'
+    | '/onboarding'
     | '/register'
     | '/report'
     | '/screen-health'
@@ -242,6 +254,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MoodRoute: typeof MoodRoute
   NutritionRoute: typeof NutritionRoute
+  OnboardingRoute: typeof OnboardingRoute
   RegisterRoute: typeof RegisterRoute
   ReportRoute: typeof ReportRoute
   ScreenHealthRoute: typeof ScreenHealthRoute
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nutrition': {
@@ -386,6 +406,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MoodRoute: MoodRoute,
   NutritionRoute: NutritionRoute,
+  OnboardingRoute: OnboardingRoute,
   RegisterRoute: RegisterRoute,
   ReportRoute: ReportRoute,
   ScreenHealthRoute: ScreenHealthRoute,
