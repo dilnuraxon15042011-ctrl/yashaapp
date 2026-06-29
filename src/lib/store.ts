@@ -92,30 +92,65 @@ export function useMounted(): boolean {
   return m;
 }
 
-const DEFAULT_CHILD: ChildProfile = {
-  id: "default", name: "Amir", dob: "2019-03-15", sex: "male",
-  color: "#F97316", heightCm: 102, weightKg: 16.5, createdAt: 0,
+/** Placeholder used only when no children exist yet (prevents crashes before redirect). */
+const PLACEHOLDER_CHILD: ChildProfile = {
+  id: "_placeholder", name: "", dob: new Date().toISOString().slice(0, 10),
+  sex: "male", color: CHILD_COLORS[0], createdAt: 0,
 };
 
-/** Multi-child list (auto-seeded from legacy single child once). */
+/** One-time migration from legacy single-child key. */
+function migrateLegacy(list: ChildProfile[]): ChildProfile[] {
+  if (list.length > 0) return list;
+  if (typeof window === "undefined") return list;
+  try {
+    const raw = localStorage.getItem(STORE_KEYS.child);
+    if (!raw) return list;
+    const legacy = JSON.parse(raw) as Partial<ChildProfile>;
+    if (!legacy?.name || !legacy?.dob) return list;
+    const id = (typeof crypto !== "undefined" && "randomUUID" in crypto) ? crypto.randomUUID() : `c${Date.now()}`;
+    return [{
+      id, name: legacy.name, dob: legacy.dob,
+      sex: (legacy.sex as "male" | "female") ?? "male",
+      color: legacy.color ?? CHILD_COLORS[0],
+      heightCm: legacy.heightCm, weightKg: legacy.weightKg,
+      createdAt: Date.now(),
+    }];
+  } catch { return list; }
+}
+
+/** Multi-child list. Empty by default; user must create first profile. */
 export function useChildren(): {
   children: ChildProfile[];
   activeId: string;
   active: ChildProfile;
+  hasChildren: boolean;
   setActiveId: (id: string) => void;
   add: (c: Omit<ChildProfile, "id" | "createdAt">) => string;
   update: (id: string, patch: Partial<ChildProfile>) => void;
   remove: (id: string) => void;
   hydrated: boolean;
 } {
-  const [list, setList, h1] = useLocalState<ChildProfile[]>(STORE_KEYS.children, [DEFAULT_CHILD]);
-  const [activeId, setActiveId, h2] = useLocalState<string>(STORE_KEYS.activeChild, DEFAULT_CHILD.id);
-  const safe = list.length ? list : [DEFAULT_CHILD];
-  const active = safe.find((c) => c.id === activeId) ?? safe[0];
+  const [rawList, setList, h1] = useLocalState<ChildProfile[]>(STORE_KEYS.children, []);
+  const [activeId, setActiveId, h2] = useLocalState<string>(STORE_KEYS.activeChild, "");
+  const hydrated = h1 && h2;
+  // Run legacy migration once after hydration if list is empty
+  useEffect(() => {
+    if (!hydrated || rawList.length > 0) return;
+    const migrated = migrateLegacy(rawList);
+    if (migrated.length > 0) {
+      setList(migrated);
+      setActiveId(migrated[0].id);
+    }
+  }, [hydrated, rawList, setList, setActiveId]);
+
+  const list = rawList;
+  const hasChildren = hydrated && list.length > 0;
+  const active = list.find((c) => c.id === activeId) ?? list[0] ?? PLACEHOLDER_CHILD;
   return {
-    children: safe,
+    children: list,
     activeId: active.id,
     active,
+    hasChildren,
     setActiveId,
     add: (c) => {
       const id = (typeof crypto !== "undefined" && "randomUUID" in crypto) ? crypto.randomUUID() : `c${Date.now()}`;
@@ -126,11 +161,10 @@ export function useChildren(): {
     update: (id, patch) => setList((p) => p.map((c) => (c.id === id ? { ...c, ...patch } : c))),
     remove: (id) => setList((p) => {
       const n = p.filter((c) => c.id !== id);
-      if (n.length === 0) return [DEFAULT_CHILD];
-      if (id === activeId) setActiveId(n[0].id);
+      if (id === activeId) setActiveId(n[0]?.id ?? "");
       return n;
     }),
-    hydrated: h1 && h2,
+    hydrated,
   };
 }
 
@@ -139,9 +173,22 @@ export function useChild(): [ChildProfile, (v: ChildProfile | ((p: ChildProfile)
   const { active, update, hydrated } = useChildren();
   const setter = useCallback((v: ChildProfile | ((p: ChildProfile) => ChildProfile)) => {
     const next = typeof v === "function" ? (v as (p: ChildProfile) => ChildProfile)(active) : v;
+    if (active.id === "_placeholder") return;
     update(active.id, next);
   }, [active, update]);
   return [active, setter, hydrated];
+}
+
+/** Redirect-to-onboarding helper. Returns true once we know a child exists. */
+export function useRequireChild(): { ready: boolean; hasChildren: boolean } {
+  const { hasChildren, hydrated } = useChildren();
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (hydrated && !hasChildren && window.location.pathname !== "/onboarding") {
+      window.location.replace("/onboarding");
+    }
+  }, [hydrated, hasChildren]);
+  return { ready: hydrated && hasChildren, hasChildren };
 }
 
 export function getLang(): Lang {
