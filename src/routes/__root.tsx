@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import YashaBot from "@/components/YashaBot";
-import Onboarding from "@/components/Onboarding";
+
 
 import appCss from "../styles.css?url";
 import i18n from "../lib/i18n";
@@ -118,7 +118,6 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <YashaBot />
-      <Onboarding />
       <Toaster position="bottom-center" richColors />
     </QueryClientProvider>
   );
